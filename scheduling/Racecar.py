@@ -2,6 +2,7 @@ import numpy as np
 from simple_pid import PID
 
 from .Task import Task
+from .tasks.DualDurationTask import DualDurationTask
 
 class Racecar:
     def __init__(self, agent_id, env, speed=6, opponent_id=1):
@@ -12,7 +13,8 @@ class Racecar:
         # Tasks
         ## Control
         self.__pid_controller = PID(0.15, 0.001, 0.15)
-        self.__controller_task = Task(period=3, duration=2, on_done=self.task_control_command, deadline_miss_callback=self.print_deadline_miss)
+        self.__controller_task = DualDurationTask(period=3, duration_smaller=2, duration_larger=3,
+                                                  on_done=self.task_control_command, deadline_miss_callback=self.print_deadline_miss)
         self.__last_control_command = [0, speed]
         # Localisation
         self.__localize_task = Task(period=2, duration=2, on_done=self.task_localize, deadline_miss_callback=self.print_deadline_miss)
@@ -42,11 +44,9 @@ class Racecar:
         self.__pid_controller.setpoint = objective_lane
         distance_to_lane_center = abs(np.linalg.norm(self.__state['pos']) - objective_lane)
         if distance_to_lane_center > .3:
-            # print("Too far from lane center")
-            pass
+            self.__controller_task.switch_to_large_duration()
         else:
-            # print("On lane center")
-            pass
+            self.__controller_task.switch_to_small_duration()
         steer = -self.__pid_controller(np.linalg.norm(self.__state['pos']))
         self.__last_control_command[0] = steer
 

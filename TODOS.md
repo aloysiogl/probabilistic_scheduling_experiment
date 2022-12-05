@@ -4,7 +4,7 @@
 - [X] Add tasks for: 
     - [X] localization, control
     - [X] opponent localization, opponent lane detection
-- [] Task duration change working
+- [X] Task duration change working
 - [] Scheduling working (using fixed priorities)
 - [] Connect localization task to control task?
 - [] Make control take longer during lane transition
