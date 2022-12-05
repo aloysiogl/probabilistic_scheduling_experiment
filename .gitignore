@@ -1,0 +1,6 @@
+*.cpython
+*.npy
+*.pyc
+*.png
+*.pgm
+*.yaml

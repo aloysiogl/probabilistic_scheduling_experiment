@@ -1,0 +1,3 @@
+- [X] Visualize lanes
+- [] Put two cars on the simulation (both moving)
+- [] Make one of them move via tasks
