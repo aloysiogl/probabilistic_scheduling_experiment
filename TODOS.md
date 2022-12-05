@@ -1,3 +1,6 @@
 - [X] Visualize lanes
 - [X] Put two cars on the simulation (both moving)
-- [] Make one of them move via tasks
+- [X] Make one of them move via tasks
+- [] Add tasks for: localization, control, opponent localization, opponent lane detection
+- [] Connect localization task to control task?
+- [] Make control take longer during lane transition

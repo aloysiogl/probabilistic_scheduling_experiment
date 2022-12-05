@@ -13,6 +13,7 @@ from trajectory_predictor.utils.SplineOptimizer import SplineOptimizer
 from trajectory_predictor.controller.WallFollowerController import WallFollowerController
 from control import angle_pos_to_control, get_control
 from LaneChanger import LaneChanger
+from scheduling.Racecar import Racecar
 
 def add_circle_to_map(env, radius, scale):
 
@@ -64,6 +65,7 @@ def main():
     n_lanes = 2
     lane_width = width/n_lanes
     lane_centers = np.linspace(0, lane_width*(n_lanes-1), n_lanes)+lane_width/2+inner_radius
+    env.lane_centers = lane_centers
     lane_changer = LaneChanger(0, lane_centers)
 
     car_2_initial_angle = np.pi/6
@@ -87,11 +89,30 @@ def main():
     pid1.sample_time = 0.01
     pid2.sample_time = 0.01
 
+    ego_rececar = Racecar(0, env, speed=speed1)
+    ego_rececar.activate()
+    env.ego_lane = 0
 
+    from pynput.keyboard import Key, Listener
+
+    def on_press(key):
+        if key == Key.left:
+            ego_rececar.switch_lane(0)
+        elif key == Key.right:
+            ego_rececar.switch_lane(1)
+    # Collect events until released
+    def listener():
+        with Listener(
+                on_press=on_press) as listener:
+            listener.join()
+    from threading import Thread
+    t = Thread(target=listener)
+    t.start()
 
     while not done:
         steer1, steer2 = get_control(pid1, env, 0), get_control(pid2, env, 1)
-        obs, step_reward, done, info = env.step(np.array([[steer1, speed1], [steer2, speed2]]))
+        control_ego = ego_rececar.update()
+        obs, step_reward, done, info = env.step(np.array([control_ego, [steer2, speed2]]))
         current_lane = lane_changer.get_current_lane()
         pid1.setpoint = lane_centers[0]
         pid2.setpoint = current_lane
@@ -102,9 +123,8 @@ def main():
         pos = env.sim.agents[1].state[0:2]
         angle = env.sim.agents[1].state[4]
         angle_pos = angle_pos_to_control(angle, pos)
-        print(f'pos: {pos}, angle: {angle}, angle_pos: {angle_pos}, norm: {np.linalg.norm(pos)}, current_lane: {current_lane}')
         
-    print('Sim elapsed time:', laptime, 'Real elapsed time:', time.time()-start)
+
 
 if __name__ == '__main__':
     main()
