@@ -11,7 +11,7 @@ from pyglet.gl import GL_POINTS
 
 from trajectory_predictor.utils.SplineOptimizer import SplineOptimizer
 from trajectory_predictor.controller.WallFollowerController import WallFollowerController
-from control import angle_pos_to_control
+from control import angle_pos_to_control, get_control
 from LaneChanger import LaneChanger
 
 def add_circle_to_map(env, radius, scale):
@@ -48,19 +48,9 @@ def get_render_callback(map_params):
 
     return render_callback
 
-        # track = np.loadtxt('../track_generator/centerline/map0.csv', delimiter=',')
-        # for i in range(track.shape[0]):
-        #     b = e.batch.add(1, GL_POINTS, None, ('v3f/stream', [track[i, 0]*50, track[i, 1]*50, 0.]),
-        #                         ('c3B/stream', [183, 193, 222]))
-                # self.drawn_waypoints.append(b)
-            # else:
-            #     pass
-                # self.drawn_waypoints[i].vertices = [scaled_points[i, 0], scaled_points[i, 1], 0.]
-
 def main():
-    N_LAPS = 1
     DISPLAY = True
-    env = gym.make('f110_gym:f110-v0', map='./map', map_ext='.pgm', num_agents=1, timestep=0.01)
+    env = gym.make('f110_gym:f110-v0', map='./map', map_ext='.pgm', num_agents=2, timestep=0.01)
     # read map parameters
     import yaml
     with open('./map.yaml') as f:
@@ -70,51 +60,51 @@ def main():
     # Rad csv file with numpy
     width = 4
     inner_radius = 20
-    initial_x = inner_radius + width/2
-
-    obs, step_reward, done, info = env.reset(np.array([[initial_x, 0, np.pi/2]]))
 
     n_lanes = 2
     lane_width = width/n_lanes
     lane_centers = np.linspace(0, lane_width*(n_lanes-1), n_lanes)+lane_width/2+inner_radius
     lane_changer = LaneChanger(0, lane_centers)
 
+    car_2_initial_angle = np.pi/6
+    car_2_initial_lane = lane_centers[1]
+    car_2_initial_pos = [np.cos(car_2_initial_angle)*car_2_initial_lane,
+                         np.sin(car_2_initial_angle)*car_2_initial_lane, 
+                         np.pi/2+car_2_initial_angle]
+    obs, step_reward, done, info = env.reset(np.array([[lane_centers[0], 0, np.pi/2], car_2_initial_pos]))
+
     if DISPLAY:
         env.render()
 
     laptime = 0.0
     start = time.time()
-    speed, steer = 5,0
+    speed1, speed2 = 6,5
     progress = 0
-    history = []
 
     controller = WallFollowerController()
-    pid = PID(0.15, 0.001, 0.15, setpoint=22) # 0.3, 0.001, 0.15 work well, tune down Kp to make smoother moves
-    pid.sample_time = 0.01
+    pid1 = PID(0.15, 0.001, 0.15, setpoint=22) # 0.3, 0.001, 0.15 work well, tune down Kp to make smoother moves
+    pid2 = PID(0.15, 0.001, 0.15, setpoint=22) # 0.3, 0.001, 0.15 work well, tune down Kp to make smoother moves
+    pid1.sample_time = 0.01
+    pid2.sample_time = 0.01
 
 
 
     while not done:
-        obs, step_reward, done, info = env.step(np.array([[steer, speed]]))
+        steer1, steer2 = get_control(pid1, env, 0), get_control(pid2, env, 1)
+        obs, step_reward, done, info = env.step(np.array([[steer1, speed1], [steer2, speed2]]))
         current_lane = lane_changer.get_current_lane()
-        pid.setpoint = current_lane
+        pid1.setpoint = lane_centers[0]
+        pid2.setpoint = current_lane
         
-        # if obs['lap_counts'][0] >= 1:
-        #     pid.setpoint = 23
-        
-        # Control
-        # steer, speed = controller.get_control(obs)
         laptime += step_reward
         if DISPLAY:
             env.render(mode='human')
-        pos = env.sim.agents[0].state[0:2]
-        angle = env.sim.agents[0].state[4]
+        pos = env.sim.agents[1].state[0:2]
+        angle = env.sim.agents[1].state[4]
         angle_pos = angle_pos_to_control(angle, pos)
-        steer = -pid(np.linalg.norm(pos))
-        print(f'pos: {pos}, angle: {angle}, angle_pos: {angle_pos}, norm: {np.linalg.norm(pos)}, current_lane: {current_lane}, steer: {steer}')
+        print(f'pos: {pos}, angle: {angle}, angle_pos: {angle_pos}, norm: {np.linalg.norm(pos)}, current_lane: {current_lane}')
         
     print('Sim elapsed time:', laptime, 'Real elapsed time:', time.time()-start)
-    np.save('history.npy', np.array(history))
 
 if __name__ == '__main__':
     main()
