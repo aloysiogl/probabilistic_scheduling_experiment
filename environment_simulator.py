@@ -115,7 +115,7 @@ def main():
         obs, step_reward, done, info = env.step(np.array([control_ego, [steer2, speed2]]))
         current_lane = lane_changer.get_current_lane()
         pid1.setpoint = lane_centers[0]
-        pid2.setpoint = current_lane
+        pid2.setpoint = lane_centers[0]
         
         laptime += step_reward
         if DISPLAY:
