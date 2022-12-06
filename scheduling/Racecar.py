@@ -15,14 +15,16 @@ class Racecar:
         ## Control
         self.__pid_controller = PID(0.15, 0.001, 0.15)
         self.__pid_controller.sample_time = 0.005
-        self.__controller_task = DualDurationTask(period=4, duration_smaller=2, duration_larger=2,
+        self.__controller_task = DualDurationTask(period=4, duration_smaller=2, duration_larger=3,
                                                   on_done=self.task_control_command, deadline_miss_callback=self.print_deadline_miss, name="Controller")
         self.__last_control_command = [0, speed]
         # Localisation
         self.__localize_task = Task(period=4, duration=1, on_done=self.task_localize, deadline_miss_callback=self.print_deadline_miss, name="Localize")
         # Opponent localisation
         self.__opponent_localize_task = Task(period=4, duration=1, on_done=self.task_opponent_localize, deadline_miss_callback=self.print_deadline_miss, name="Opponent Localize")
-        self.__task_list = [self.__controller_task, self.__localize_task, self.__opponent_localize_task]
+        # Task with empty callback
+        self.__empty_task = Task(period=4, duration=1, on_done=lambda: None, deadline_miss_callback=self.print_deadline_miss, name="Empty")
+        self.__task_list = [self.__controller_task, self.__localize_task, self.__opponent_localize_task, self.__empty_task]
         self.__state = {
             'lane': 0,
             'opponent_lane': 0,
@@ -76,4 +78,8 @@ class Racecar:
             if task_to_execute and task_to_execute.get_id() == task.get_id():
                 task.update(True, current_time)
             else: task.update(False, current_time)
+        print('Tasks dmp')
+        for task in self.__task_list:
+            print(f'{task.name}: {task.dmp_estimate}')
+        
         return self.__last_control_command

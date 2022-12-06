@@ -6,4 +6,4 @@
     - [X] opponent localization, opponent lane detection
 - [X] Task duration change working
 - [X] Scheduling working (using EDF)
-- [] Add placeholder task (human interface system)
+- [X] Add placeholder task (human interface system)

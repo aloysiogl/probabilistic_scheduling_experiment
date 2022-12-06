@@ -11,5 +11,6 @@ class EDFScheduler(Scheduler):
                 print(f'Scheduling task {task.name} with deadline {task.get_deadline()}')
                 return task
             else:
-                print(f'Task {task.name} is done')
+                # print(f'Task {task.name} is done')
+                pass
         return None
