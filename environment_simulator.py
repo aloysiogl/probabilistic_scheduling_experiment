@@ -51,7 +51,7 @@ def get_render_callback(map_params):
 
 def main():
     DISPLAY = True
-    env = gym.make('f110_gym:f110-v0', map='./map', map_ext='.pgm', num_agents=2, timestep=0.01)
+    env = gym.make('f110_gym:f110-v0', map='./map', map_ext='.pgm', num_agents=2, timestep=0.005)
     # read map parameters
     import yaml
     with open('./map.yaml') as f:
@@ -108,10 +108,11 @@ def main():
     from threading import Thread
     t = Thread(target=listener)
     t.start()
+    current_time = 0
 
     while not done:
         steer1, steer2 = get_control(pid1, env, 0), get_control(pid2, env, 1)
-        control_ego = ego_rececar.update()
+        control_ego = ego_rececar.update(current_time)
         obs, step_reward, done, info = env.step(np.array([control_ego, [steer2, speed2]]))
         current_lane = lane_changer.get_current_lane()
         pid1.setpoint = lane_centers[0]

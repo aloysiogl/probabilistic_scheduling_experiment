@@ -3,6 +3,7 @@ from simple_pid import PID
 
 from .Task import Task
 from .tasks.DualDurationTask import DualDurationTask
+from .schedulers.EDFScheduler import EDFScheduler
 
 class Racecar:
     def __init__(self, agent_id, env, speed=6, opponent_id=1):
@@ -13,13 +14,14 @@ class Racecar:
         # Tasks
         ## Control
         self.__pid_controller = PID(0.15, 0.001, 0.15)
-        self.__controller_task = DualDurationTask(period=3, duration_smaller=2, duration_larger=3,
-                                                  on_done=self.task_control_command, deadline_miss_callback=self.print_deadline_miss)
+        self.__pid_controller.sample_time = 0.005
+        self.__controller_task = DualDurationTask(period=4, duration_smaller=2, duration_larger=2,
+                                                  on_done=self.task_control_command, deadline_miss_callback=self.print_deadline_miss, name="Controller")
         self.__last_control_command = [0, speed]
         # Localisation
-        self.__localize_task = Task(period=2, duration=2, on_done=self.task_localize, deadline_miss_callback=self.print_deadline_miss)
+        self.__localize_task = Task(period=4, duration=1, on_done=self.task_localize, deadline_miss_callback=self.print_deadline_miss, name="Localize")
         # Opponent localisation
-        self.__opponent_localize_task = Task(period=2, duration=2, on_done=self.task_opponent_localize, deadline_miss_callback=self.print_deadline_miss)
+        self.__opponent_localize_task = Task(period=4, duration=1, on_done=self.task_opponent_localize, deadline_miss_callback=self.print_deadline_miss, name="Opponent Localize")
         self.__task_list = [self.__controller_task, self.__localize_task, self.__opponent_localize_task]
         self.__state = {
             'lane': 0,
@@ -27,6 +29,8 @@ class Racecar:
             'pos': np.array([0, 0]),
             'opponent_pos': np.array([0, 0])
         }
+
+        self.__scheduler = EDFScheduler()
 
     def activate(self):
         for task in self.__task_list:
@@ -62,10 +66,14 @@ class Racecar:
         self.__state['lane'] = lane
 
     def print_deadline_miss(self):
-        print("Deadline miss")
+        # print("Deadline miss")
+        pass
 
-    def update(self):
+    def update(self, current_time):
         # TODO the scheduler should work here
+        task_to_execute = self.__scheduler.schedule(self.__task_list)
         for task in self.__task_list:
-            task.update(True)
+            if task_to_execute and task_to_execute.get_id() == task.get_id():
+                task.update(True, current_time)
+            else: task.update(False, current_time)
         return self.__last_control_command

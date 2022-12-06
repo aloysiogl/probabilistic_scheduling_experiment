@@ -5,6 +5,5 @@
     - [X] localization, control
     - [X] opponent localization, opponent lane detection
 - [X] Task duration change working
-- [] Scheduling working (using fixed priorities)
-- [] Connect localization task to control task?
-- [] Make control take longer during lane transition
+- [X] Scheduling working (using EDF)
+- [] Add placeholder task (human interface system)
