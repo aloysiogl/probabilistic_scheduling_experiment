@@ -1,19 +1,10 @@
-from locale import normalize
-
-import time
-
 import gym
 import numpy as np
-import shapely.geometry as shp
 from simple_pid import PID
-
 from pyglet.gl import GL_POINTS
+from pynput.keyboard import Key, Listener
 
-from trajectory_predictor.utils.SplineOptimizer import SplineOptimizer
-from trajectory_predictor.controller.WallFollowerController import WallFollowerController
-from control import angle_pos_to_control, get_control
-from LaneChanger import LaneChanger
-from scheduling.Racecar import Racecar
+from scheduling_simulator.Racecar import Racecar
 
 def add_circle_to_map(env, radius, scale):
 
@@ -23,7 +14,7 @@ def add_circle_to_map(env, radius, scale):
                             ('c3B/stream', [183, 193, 222]))
 
 
-def get_render_callback(map_params):
+def get_render_callback():
     state = 0
     def render_callback(env_renderer):
             # custom extra drawing function
@@ -50,15 +41,11 @@ def get_render_callback(map_params):
     return render_callback
 
 def main():
+    # Setting up simulation parameters
     DISPLAY = True
     env = gym.make('f110_gym:f110-v0', map='./map', map_ext='.pgm', num_agents=2, timestep=0.005)
-    # read map parameters
-    import yaml
-    with open('./map.yaml') as f:
-        map_params = yaml.load(f, Loader=yaml.FullLoader)
-    env.add_render_callback(get_render_callback(map_params))
+    env.add_render_callback(get_render_callback())
 
-    # Rad csv file with numpy
     width = 4
     inner_radius = 20
 
@@ -66,66 +53,67 @@ def main():
     lane_width = width/n_lanes
     lane_centers = np.linspace(0, lane_width*(n_lanes-1), n_lanes)+lane_width/2+inner_radius
     env.lane_centers = lane_centers
-    lane_changer = LaneChanger(0, lane_centers)
 
     car_2_initial_angle = np.pi/6
     car_2_initial_lane = lane_centers[1]
     car_2_initial_pos = [np.cos(car_2_initial_angle)*car_2_initial_lane,
                          np.sin(car_2_initial_angle)*car_2_initial_lane, 
                          np.pi/2+car_2_initial_angle]
-    obs, step_reward, done, info = env.reset(np.array([[lane_centers[0], 0, np.pi/2], car_2_initial_pos]))
+
+    speed_ego, speed_opponent = 6, 5
+    
+    env.reset(np.array([[lane_centers[0], 0, np.pi/2], car_2_initial_pos]))
 
     if DISPLAY:
         env.render()
 
-    laptime = 0.0
-    start = time.time()
-    speed1, speed2 = 6,5
-    progress = 0
-
-    controller = WallFollowerController()
-    pid1 = PID(0.15, 0.001, 0.15, setpoint=22) # 0.3, 0.001, 0.15 work well, tune down Kp to make smoother moves
+    # Control for oppoenent vehicle
     pid2 = PID(0.15, 0.001, 0.15, setpoint=22) # 0.3, 0.001, 0.15 work well, tune down Kp to make smoother moves
-    pid1.sample_time = 0.01
     pid2.sample_time = 0.01
+    current_lane_oppoenent = 1
 
-    ego_rececar = Racecar(0, env, speed=speed1)
+    def get_control(pid, env, car_index): 
+        pos = env.sim.agents[car_index].state[0:2]
+        steer = -pid(np.linalg.norm(pos))
+        return steer
+    
+    def get_current_lane():
+        # Probability of lane change
+        nonlocal current_lane_oppoenent
+        p = 0.001
+        if np.random.rand() < p:
+            current_lane_oppoenent = (current_lane_oppoenent + 1) % len(lane_centers)
+        return lane_centers[current_lane_oppoenent]
+
+    # Control for ego vehicle
+    ego_rececar = Racecar(0, env, speed=speed_ego)
     ego_rececar.activate()
     env.ego_lane = 0
 
-    from pynput.keyboard import Key, Listener
-
+    # Keyboard listener
     def on_press(key):
         if key == Key.left:
             ego_rececar.switch_lane(0)
         elif key == Key.right:
             ego_rececar.switch_lane(1)
-    # Collect events until released
     def listener():
         with Listener(
                 on_press=on_press) as listener:
             listener.join()
     from threading import Thread
-    t = Thread(target=listener)
+    t = Thread(target=listener, daemon=True)
     t.start()
-    current_time = 0
 
-    while not done:
-        steer1, steer2 = get_control(pid1, env, 0), get_control(pid2, env, 1)
+    # Simulation loop
+    current_time = 0
+    while True:
+        steer_opponent = get_control(pid2, env, 1)
         control_ego = ego_rececar.update(current_time)
-        obs, step_reward, done, info = env.step(np.array([control_ego, [steer2, speed2]]))
-        current_lane = lane_changer.get_current_lane()
-        pid1.setpoint = lane_centers[0]
-        pid2.setpoint = lane_changer.get_current_lane()
+        env.step(np.array([control_ego, [steer_opponent, speed_opponent]]))
+        pid2.setpoint = get_current_lane()
         
-        laptime += step_reward
         if DISPLAY:
             env.render(mode='human')
-        pos = env.sim.agents[1].state[0:2]
-        angle = env.sim.agents[1].state[4]
-        angle_pos = angle_pos_to_control(angle, pos)
-        
-
 
 if __name__ == '__main__':
     main()

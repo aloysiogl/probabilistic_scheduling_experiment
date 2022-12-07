@@ -1,6 +1,8 @@
+*__pycache__
 *.cpython
 *.npy
 *.pyc
 *.png
 *.pgm
 *.yaml
+*.egg-info
