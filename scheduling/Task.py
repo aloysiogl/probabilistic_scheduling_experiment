@@ -1,7 +1,7 @@
 class Task:
     task_counter = 0
 
-    def __init__(self, period, duration, on_done=None, deadline_miss_callback=None, name=None):
+    def __init__(self, period, duration, arrival_time=0, on_done=None, deadline_miss_callback=None, name=None):
         self.task_id = Task.task_counter
         Task.task_counter += 1
         self.name = name
@@ -12,6 +12,7 @@ class Task:
         self.activation_time = 0
         self.__succeeded_deadlines = 0
         self.__missed_deadlines = 0
+        self.__arrival_time = arrival_time
 
         self.on_done = on_done
         self.deadline_miss_callback = deadline_miss_callback
@@ -55,7 +56,7 @@ class Task:
                 self.__missed_deadlines += 1
             self.activate(current_time)
             return
-        if self.current_duration > 0 and is_active:
+        if self.current_duration > 0 and is_active and self.counter >= self.__arrival_time:
             self.current_duration -= 1
             if self.current_duration == 0:
                 self.__succeeded_deadlines += 1

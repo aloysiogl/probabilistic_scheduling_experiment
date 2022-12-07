@@ -1,9 +1,10 @@
 - [X] Visualize lanes
 - [X] Put two cars on the simulation (both moving)
 - [X] Make one of them move via tasks
-- [X] Add tasks for: 
+- [X] Add tasks for:
     - [X] localization, control
     - [X] opponent localization, opponent lane detection
 - [X] Task duration change working
 - [X] Scheduling working (using EDF)
 - [X] Add placeholder task (human interface system)
+- [] Cleanup code for probabilistic change (do todos)
