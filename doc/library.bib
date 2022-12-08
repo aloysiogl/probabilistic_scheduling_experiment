@@ -1,0 +1,74 @@
+@inproceedings{althoffCommonRoadComposableBenchmarks2017,
+  title = {{{CommonRoad}}: {{Composable}} Benchmarks for Motion Planning on Roads},
+  shorttitle = {{{CommonRoad}}},
+  booktitle = {2017 {{IEEE Intelligent Vehicles Symposium}} ({{IV}})},
+  author = {Althoff, Matthias and Koschi, Markus and Manzinger, Stefanie},
+  date = {2017-06},
+  pages = {719--726},
+  doi = {10.1109/IVS.2017.7995802},
+  abstract = {Numerical experiments for motion planning of road vehicles require numerous components: vehicle dynamics, a road network, static obstacles, dynamic obstacles and their movement over time, goal regions, a cost function, etc. Providing a description of the numerical experiment precise enough to reproduce it might require several pages of information. Thus, only key aspects are typically described in scientific publications, making it impossible to reproduce results - yet, re-producibility is an important asset of good science. Composable benchmarks for motion planning on roads (CommonRoad) are proposed so that numerical experiments are fully defined by a unique ID; all information required to reconstruct the experiment can be found on the CommonRoad website. Each benchmark is composed by a vehicle model, a cost function, and a scenario (including goals and constraints). The scenarios are partly recorded from real traffic and partly hand-crafted to create dangerous situations. We hope that CommonRoad saves researchers time since one does not have to search for realistic parameters of vehicle dynamics or realistic traffic situations, yet provides the freedom to compose a benchmark that fits one's needs.},
+  eventtitle = {2017 {{IEEE Intelligent Vehicles Symposium}} ({{IV}})},
+  keywords = {Benchmark testing,Cost function,Libraries,Mathematical model,Planning,Roads,Vehicle dynamics},
+  file = {/Users/aloysiogalvaolopes/Library/CloudStorage/GoogleDrive-aloysiogl@gmail.com/My Drive/lix/thesis/pdfs/Althoff et al_2017_CommonRoad.pdf;/home/aloysio/snap/zotero-snap/common/Zotero/storage/SFKB64WQ/7995802.html}
+}
+
+@inproceedings{okelly2020f1tenth,
+  title = {{{F1TENTH}}: {{An}} Open-Source Evaluation Environment for Continuous Control and Reinforcement Learning},
+  booktitle = {{{NeurIPS}} 2019 Competition and Demonstration Track},
+  author = {O’Kelly, Matthew and Zheng, Hongrui and Karthik, Dhruv and Mangharam, Rahul},
+  date = {2020},
+  pages = {77--89},
+  organization = {{PMLR}}
+}
+
+@article{cazorlaPROARTISProbabilisticallyAnalyzable2013,
+  title = {{{PROARTIS}}: {{Probabilistically Analyzable Real-Time Systems}}},
+  shorttitle = {{{PROARTIS}}},
+  author = {Cazorla, Francisco J. and Quiñones, Eduardo and Vardanega, Tullio and Cucu, Liliana and Triquet, Benoit and Bernat, Guillem and Berger, Emery and Abella, Jaume and Wartel, Franck and Houston, Michael and Santinelli, Luca and Kosmidis, Leonidas and Lo, Code and Maxim, Dorin},
+  date = {2013-05-01},
+  journaltitle = {ACM Transactions on Embedded Computing Systems},
+  shortjournal = {ACM Trans. Embed. Comput. Syst.},
+  volume = {12},
+  pages = {94:1--94:26},
+  issn = {1539-9087},
+  doi = {10.1145/2465787.2465796},
+  url = {https://doi.org/10.1145/2465787.2465796},
+  urldate = {2022-11-17},
+  abstract = {Static timing analysis is the state-of-the-art practice of ascertaining the timing behavior of current-generation real-time embedded systems. The adoption of more complex hardware to respond to the increasing demand for computing power in next-generation systems exacerbates some of the limitations of static timing analysis. In particular, the effort of acquiring (1) detailed information on the hardware to develop an accurate model of its execution latency as well as (2) knowledge of the timing behavior of the program in the presence of varying hardware conditions, such as those dependent on the history of previously executed instructions. We call these problems the timing analysis walls. In this vision-statement article, we present probabilistic timing analysis, a novel approach to the analysis of the timing behavior of next-generation real-time embedded systems. We show how probabilistic timing analysis attacks the timing analysis walls; we then illustrate the mathematical foundations on which this method is based and the challenges we face in the effort of efficiently implementing it. We also present experimental evidence that shows how probabilistic timing analysis reduces the extent of knowledge about the execution platform required to produce probabilistically accurate WCET estimations.},
+  issue = {2s},
+  keywords = {Embedded and real-time systems,probablistic real-time systems,resource sharing,worst-case execution time},
+  file = {/Users/aloysiogalvaolopes/Library/CloudStorage/GoogleDrive-aloysiogl@gmail.com/My Drive/lix/thesis/pdfs/Cazorla et al_2013_PROARTIS.pdf}
+}
+
+@article{maximOptimalPriorityAssignment,
+  title = {Optimal {{Priority Assignment Algorithms}} for {{Probabilistic Real-Time Systems}}},
+  author = {Maxim, Dorin and Buffet, Olivier and Santinelli, Luca and Cucu-Grosjean, Liliana and Davis, Robert I and Grand-Est, Nancy},
+  pages = {10},
+  abstract = {In this paper we investigate the problem of optimal priority assignment in fixed priority pre-emptive single processor systems where tasks have probabilistic execution times. We identify three sub-problems which optimise different metrics related to the probability of deadline failures. For each sub-problem we propose an algorithm that is proved optimal. The first two algorithms are inspired by Audsley’s algorithm which is a greedy (lowest priority first) approach that is optimal in the case of tasks with deterministic execution times. Since we prove that such a greedy approach is not optimal for the third sub-problem, we propose a tree search algorithm in this case.},
+  langid = {english},
+  file = {/Users/aloysiogalvaolopes/Library/CloudStorage/GoogleDrive-aloysiogl@gmail.com/My Drive/lix/thesis/pdfs/Maxim et al_Optimal Priority Assignment Algorithms for Probabilistic Real-Time Systems.pdf}
+}
+
+@article{bernatPWCETToolProbabilistic2003,
+  title = {{{pWCET}}: A {{Tool}} for {{Probabilistic Worst-Case Execution Time Analysis}} of {{Real-Time Systems}}},
+  shorttitle = {{{pWCET}}},
+  author = {Bernat, Guillem and Colin, Antoine and Petters, Stefan},
+  date = {2003-06-21},
+  abstract = {This paper describes the tool support for a framework for performing probabilistic worst-case execution time (WCET) analysis for embedded real-time systems. The tool is based on a combination of measurement and static analysis, all in a probabilistic framework. Measurement is used to determine execution traces and static analysis to construct the worst path and e\#ectively providing an upper bound on the worst-case execution time of a program. The paper illustrates the theoretical framework and the components of the tool together with a case study.},
+  file = {/Users/aloysiogalvaolopes/Library/CloudStorage/GoogleDrive-aloysiogl@gmail.com/My Drive/lix/thesis/pdfs/Bernat et al_2003_pWCET.pdf}
+}
+
+@inproceedings{cucu-grosjeanMeasurementBasedProbabilisticTiming2012,
+  title = {Measurement-{{Based Probabilistic Timing Analysis}} for {{Multi-path Programs}}},
+  booktitle = {2012 24th {{Euromicro Conference}} on {{Real-Time Systems}}},
+  author = {Cucu-Grosjean, Liliana and Santinelli, Luca and Houston, Michael and Lo, Code and Vardanega, Tullio and Kosmidis, Leonidas and Abella, Jaume and Mezzetti, Enrico and Quiñones, Eduardo and Cazorla, Francisco J.},
+  date = {2012-07},
+  pages = {91--101},
+  issn = {2377-5998},
+  doi = {10.1109/ECRTS.2012.31},
+  abstract = {The rigorous application of static timing analysis requires a large and costly amount of detail knowledge on the hardware and software components of the system. Probabilistic Timing Analysis has potential for reducing the weight of that demand. In this paper, we present a sound measurement-based probabilistic timing analysis technique based on Extreme Value Theory. In all the experiments made as part of this work, the timing bounds determined by our technique were less than 15\% pessimistic in comparison with the tightest possible bounds obtainable with any probabilistic timing analysis technique. As a point of interest to industrial users, our technique also requires a comparatively low number of measurement runs of the program under analysis, less than 650 runs were needed for the benchmarks presented in this paper.},
+  eventtitle = {2012 24th {{Euromicro Conference}} on {{Real-Time Systems}}},
+  keywords = {Computational modeling,Computer architecture,Distribution functions,Hardware,Probabilistic logic,probabilistic real-time systems,Random variables,Timing,timing analysis},
+  file = {/Users/aloysiogalvaolopes/Library/CloudStorage/GoogleDrive-aloysiogl@gmail.com/My Drive/lix/thesis/pdfs/Cucu-Grosjean et al_2012_Measurement-Based Probabilistic Timing Analysis for Multi-path Programs.pdf}
+}
+

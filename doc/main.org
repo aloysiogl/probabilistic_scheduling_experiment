@@ -1,0 +1,117 @@
+#+TITLE: Optimal scheduling for overtaking in a road with two lanes and one opponent
+#+AUTHOR: Aloysio Galvão Lopes
+#+LATEX_CLASS_OPTIONS: [a4paper, 12pt, twocolumn]
+
+#+LATEX_HEADER: \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage[top=1in, bottom=1in, left=0.5in, right=0.5in]{geometry}
+#+LATEX_HEADER: \setlength{\columnsep}{2em}
+
+* Problem definition
+
+In general lines, we are interested in the problem of finding the best scheduling strategies for a given CPS (in this case a simulated car) given that the execution time of the tasks depend on the state of the environment.
+
+To clarify this, we will define clearly the following: the environment, our concept of `best' scheduling, the tasks and the chosen scheduling strategy.
+
+** Environment
+The environment is composed of two vehicles in a circular road as shown in Figure [[fig:map]]. The dynamics of each vehicle are simulated by external code and the cpu for the ego vehicle, which outputs the control, is also simulated. The whole simulation is composed of steps, on each step, the physics simulation performs one integration step and the cpu simulation performs one computation step.
+
+The road is divided in two lanes (inner and outer).
+
+#+CAPTION: Circular road used in the simulation with two lanes and two vehicles.
+#+NAME: fig:map
+#+ATTR_LATEX: :width 0.75\linewidth
+[[file:map.png]]
+
+*** Dynamics
+The dynamics are simulated using \textit{f1tenth\_gym} \cite{okelly2020f1tenth}, which implements the single track model from \cite{althoffCommonRoadComposableBenchmarks2017}. The model basically considers that the car is a bicycle, additionally, for low speeds, it considers only the kinematics.
+
+*** CPU
+The cpu simulator was developed by myself and simulates a simple monocore cpu. Periodic tasks are given to the cpu and for each step the scheduler assigns a task to the cpu. Each task is given a code and the code is executed at the end of the task if the task finished before its deadline. Figure [[fig:cpu_simulator_diagram]] shows a diagram which explains graphically how the simulation is done.
+
+#+name: fig:cpu_simulator_diagram
+#+caption: Three diferent periodic tasks (all with period and deadline 3) are simulated, each time step the scheduler code (the gear in the image) gives to the cpu the task it should execute. The simulated cpu adds execution units to the scheduled task. Finally, the red arrow shows the moment where the completed task's code was executed (in this case yellow lost its deadline and its code was not executed).
+[[file:cpu_simulator_diagram.pdf]]
+
+** Tasks
+Conventions:
+- $T_i$ is the period of the task $\tau_i$.
+- $D_i$ is the deadline of the task $\tau_i$.
+- $C_i$ is the computation time of the task $\tau_i$.
+- $A_i$ is the arrival time of the task $\tau_i$.
+- the fundamental unit is the simulation step.
+- the state $S$ describes global variables accessible by any task.
+
+For the moment, we use only periodic tasks with period $T=6$ and implicit deadlines ($T=D$). Each task $\tau_i$ is described by the tuple $(T_i, C_i, A_i)$. The tasks can communicate by updating a globally accessible state.
+
+The following tasks are considered:
+- Ego localization $\tau_{l_e} = (6, 1, 0)$: when done, updates the ego vehicle's localization in the state as well, as detects the current lane and updates the state with this information.
+- Opponent localization $\tau_{l_o} = (6, 1, 0)$: when done, updates the opponent vehicle's localization (and current lane) in the state, and, if the vehicle is in a /danger situation/ (to be defined further), updates the scheduler's mode.
+- Control $\tau_c = (6, 2-3, 3)$: controls the ego vehicle with a controller to be described in detail later. If the vehicle is in a /danger situation/, the controller is changed to a /safe controller/. The /safe controller/ takes 3 units of time instead of 2 in normal execution mode.
+- Empty $\tau_e = (6, 2, 0)$: just wastes cpu time, used to simulate a non prioritary task such as communication for visualization purposes.
+
+*** Controller
+We use a simple PID controller to keep the ego vehicle in the middle of the inner lane. To make that possible, the PID controls the radius with regard to the center of the road using as output the steering angle of the vehicle. If the ego vehicle detects that the distance between itself and the opponent is less than a threshold and that the opponent is in the same lane, ego is in a /danger situation/.
+
+When in a /danger situation/, the controller is changed to a /safe controller/, this controller keeps the same PID, but reduces the speed drastically. As stated before, the safe controller is supposed to take longer to execute.
+
+** The opponent
+The opponent uses the same controller to follow lanes as ego, but it updates its control in every simulation step. Therefore, there is no cpu simulation for the opponent.
+
+Also, the radius which it keeps can be changed so that it switches lanes. With that in mind, the opponent has a small probability $p_\epsilon$ of changing the controller's set point at each time step (in order to change lanes).
+
+** Definition of optimal probabilistic scheduling
+:PROPERTIES:
+:CUSTOM_ID: sec:optimal_scheduling
+:END:
+Conventions:
+    - $DMP(\tau_i)$ is the deadline miss probability of the task $\tau_i$.
+    - \tau_i is critical if and only if $i \leq k$.
+
+Given a set of tasks, we want the system to be able to schedule most of the time the critical tasks and, whenever possible, the tasks which are not critical.
+
+With that in mind, a possible definition of optimal scheduling is one which minimizes the deadline miss probability of the non-critical tasks and, at the same time, ensures that the critical tasks are always scheduled respecting a given deadline miss probability. More formally, given a set of tasks $\mathcal{T}$, a scheduling strategy $\mathcal{S}$ is optimal for a monocore system if it is able to provide an order for the tasks to be executed such that \eqref{eq:optimal} is minimal among any possible scheduler, respecting the constraints \eqref{eq:optimal_conditions}. In \eqref{eq:optimal_conditions}, $p_i$ are the maximal deadline miss probabilities for each critical task.
+
+#+name: eq:optimal
+\begin{equation}
+\max_{\tau_i \in \mathcal{T}, \text{ } i > k} DMP(\tau_i)
+\end{equation}
+
+#+name: eq:optimal_conditions
+\begin{align}
+\forall \tau_i \in \mathcal{T}, \text{ } i \leq k \implies DMP(\tau_i) \leq p_i
+\end{align}
+
+** Scheduling strategy
+For the moment, one basic scheduling strategy has been implemented. The objective is, in the end, to find an optimal strategy following the definition in Section [[#sec:optimal_scheduling]]. The current scheduler, however, does not respect the given definition.
+
+In the current setting, our high priority tasks are $\tau_c$, $\tau_{l_e}$ and $\tau_{l_o}$, and the low priority task is $\tau_e$. We wanted explicitly to find a situation where we needed to choose between running only the prioritary tasks (if $\tau_c$ exceeds) or running all tasks. Those two scenarios needed to be mutually exclusive, therefore if we are in a /danger situation/ and we chose to run $\tau_e$ we would have to miss the deadline for $\tau_c$. This situation is illustrated in Figure [[fig:possible_situations]]. We highlight that we chose to restrain ourselves to *non-preemptive* scheduling because the same problem would not arise in a preemptive scheduling as we show in Figure [[fig:situations_preemptive]].
+
+#+name: fig:possible_situations
+#+caption: Four possible situations and two possible schedules (in modes HI and LO) defined by task priorities. The magenta tasks correspond to $\tau_{l_e}$ and $\tau_{l_o}$, the green task corresponds to $\tau_e$ and the blue task corresponds to $\tau_c$. The red arrow corresponds to the arrival of $\tau_c$ (all other arrivals are in the beggining of the period). The top line corresponds to normal operation and the bottom to a /danger situation/.
+[[file:tasks.pdf]]
+
+#+name: fig:situations_preemptive
+#+caption: Same notation as in Figure [[fig:possible_situations]] but with preemptive scheduling. Now, the prioritary tasks are always executed and the non-prioritary tasks are executed only if possible.
+[[file:tasks_preemptive.pdf]]
+
+*** Ideal scheduler
+Given this scenario, we can define our ideal scheduler. From now on, /danger situation/ will be considered a random variable $\Gamma \in \{ \top, \bot \}$, with $\Gamma \sim p_{\Gamma}$. We can express $p_\Gamma$ as a function of the current state of the system $S$ and the probability of lane change of the opponent $p_\epsilon$.
+
+The principle that we wish to study to build the ideal scheduler is the fact that we could express $DMP(\tau_i)$ as function of $p_{\Gamma \mid S}$. The fact that the distribution of $\Gamma$ is conditioned on the current state of the system $S$ is important because we could derive a better scheduler using the observations of the opponent's position and the ego current position.
+
+*** Current scheduler
+For the moment, in the last meeting, you have seen a scheduler with fixed priorities and two modes. The mode change is triggered by /danger situation/. The modes and priorities (from left to right) are:
+- LO: $\tau_{l_e}$, $\tau_{l_o}$, $\tau_e$, $\tau_c$
+- HI: $\tau_{l_e}$, $\tau_{l_o}$, $\tau_c$ 
+
+This allows us to have low priority tasks running only when the system is not in a /danger situation/.
+
+** TODOs
+- Understand what is happening while we change modes.
+- Create a scheduler that tries to achieve the optimality concept defined in Section [[#sec:optimal_scheduling]] through mode changes.
+
+* Bibliography
+The notion of optimality defined here was heavily inspired by the definitions present in \cite{maximOptimalPriorityAssignment}. The work in PROARTIS \cite{cazorlaPROARTISProbabilisticallyAnalyzable2013} \cite{cucu-grosjeanMeasurementBasedProbabilisticTiming2012} and\cite{bernatPWCETToolProbabilistic2003} can be useful to define the relation between $S$ and $\Gamma$ in more complex scenarios via static analysis or measurements.
+
+bibliographystyle:plain
+bibliography:library.bib

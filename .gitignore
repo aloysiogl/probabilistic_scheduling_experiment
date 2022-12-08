@@ -6,3 +6,4 @@
 *.pgm
 *.yaml
 *.egg-info
+.vscode/ltex.dictionary.en-US.txt
